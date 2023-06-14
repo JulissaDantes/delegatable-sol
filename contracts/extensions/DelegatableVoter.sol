@@ -37,17 +37,18 @@ contract DelegatableVoter is Ownable, Delegatable("DelegatableVoter", "1") {
         string memory description,
         uint256 expirationBlock,
         SignedDelegation memory signedDelegation
-    ) external 
-      returns (bytes32)
-    {
+    ) external returns (bytes32) {
         require(
-                verifyDelegationSignature(signedDelegation) == owner(),
+            verifyDelegationSignature(signedDelegation) == owner(),
             "Invalid delegation"
         );
         return _propose(description, expirationBlock);
     }
 
-    function _propose(string memory description, uint256 expirationBlock) internal returns(bytes32) {
+    function _propose(string memory description, uint256 expirationBlock)
+        internal
+        returns (bytes32)
+    {
         bytes32 proposal = keccak256(abi.encodePacked(description));
         require(
             proposals[proposal].expiration == 0,
@@ -96,6 +97,7 @@ contract DelegatableVoter is Ownable, Delegatable("DelegatableVoter", "1") {
         require(proposal.expiration < block.number, "Active proposal");
         return proposal.supportVotes > proposal.againstVotes;
     }
+
     /* Override needed */
     function _msgSender()
         internal
