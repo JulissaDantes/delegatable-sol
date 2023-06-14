@@ -10,4 +10,3 @@ User A can issue a delegation to User B who re-delegates it to User C to vote on
 Delegation with the Allowed Methods caveat enforcer to restrict what method User B can call
 Delegation with the Block Number caveat enforcer to restrict when User B can use the delegation
  */
-
