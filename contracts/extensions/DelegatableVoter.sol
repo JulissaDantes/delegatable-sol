@@ -14,9 +14,6 @@ contract DelegatableVoter is Ownable, Delegatable("DelegatableVoter", "1") {
 
     mapping(bytes32 => Proposal) public proposals;
 
-    //TBD
-    // The contract should use EIP-712 typed data for all off-chain signatures to provide more security and a better user experience.
-
     /* Only the owner of the contract is be able to create new proposals.
      * A proposal consists of a short string description and an expiration time (measured in block numbers).
      * `expirationBlock` must be the block number when it expires.
