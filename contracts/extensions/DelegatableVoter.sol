@@ -1,0 +1,67 @@
+//SPDX-License-Identifier: MIT
+pragma solidity 0.8.15;
+
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "../Delegatable.sol";
+
+
+contract DelegatableVoter is Ownable, Delegatable("DelegatableVoter", 1) {
+    struct Proposal {
+        uint256 supportVotes;
+        uint256 againstVotes;
+        uint256 expiration;
+        mapping(address => bool) voters;
+    }
+
+    mapping(bytes32 => Proposal) public proposals;
+    //TBD
+        // The contract should use EIP-712 typed data for all off-chain signatures to provide more security and a better user experience.
+
+    /* Only the owner of the contract is be able to create new proposals. 
+    * A proposal consists of a short string description and an expiration time (measured in block numbers).
+    * `expirationBlock` must be the block number when it expires.
+    * Returns the proposal hash.
+    */
+    function propose(string memory description, uint256 expirationBlock) external onlyOwner returns(bytes32) {
+        bytes32 proposal = keccak256(abi.encodePacked(description));
+        require(proposals[proposal].expiration  == 0, "Proposal already created");
+        require(expiration > 0, "Invalid expiration time");
+        // Saving hash instead of string to be more gas efficient
+        proposals[proposal].expiration = expirationBlock;
+        return proposal;
+    }
+    /*
+    * The contract owner should be able to issue off-chain delegations to other users to create proposals on their behalf.
+    */
+    function delegateProposal(string memory description, uint256 expirationBlock, SignedDelegation memory signedDelegation) external {
+
+    }
+
+    /* Any user is be able to vote for proposals that are active. Each user has only one vote per active proposal.
+    * Users should be able to issue off-chain delegations to other users to vote on a proposal on their behalf.
+    *  If user supports proposal `vote` should be `true`. 
+    *  If `voter` is not the message sender is a delegation.
+    */
+    function vote(bytes32 proposal, bool vote,  address voter, SignedDelegation memory signedDelegation) external {
+        Proposal proposal = proposals[_proposal];
+        require(proposal.expiration >= block.number, "Closed proposal");
+        require(msg.sender == voter || verifyDelegationSignature(signedDelegation) == voter, "Invalid delegation");
+        require(!proposal.voters[voter], "Already voted");
+        if (vote) {
+            proposal.supportVotes += 1;
+        } else {
+            proposal.againstVotes += 1;
+        }
+    }
+
+    /* When the proposal expires (the current block number is greater than the proposal's expiration), no more votes can be cast for that proposal. 
+    * There should be a function to count the votes and declare the final result. ie Approved or Rejected
+    * Returns `true` if Approved, and `false` if Rejected.
+    */
+    function count(bytes32 _proposal) external returns(bool) {
+        Proposal proposal = proposals[_proposal];
+        require(proposal.expiration < block.number, "Active proposal");
+        return proposal.supportVotes > proposal.againstVotes;
+    }
+
+}
