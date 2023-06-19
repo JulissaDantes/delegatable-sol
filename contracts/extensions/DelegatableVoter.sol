@@ -39,8 +39,8 @@ contract DelegatableVoter is Ownable, Delegatable("DelegatableVoter", "1") {
         SignedDelegation memory signedDelegation
     ) external returns (bytes32) {
         require(
-            !usedSignatures(signedDelegation)&&
-            verifyDelegationSignature(signedDelegation) == owner(),
+            !usedSignatures(signedDelegation) &&
+                verifyDelegationSignature(signedDelegation) == owner(),
             "Invalid delegation"
         );
         return _propose(description, expirationBlock);
@@ -76,8 +76,10 @@ contract DelegatableVoter is Ownable, Delegatable("DelegatableVoter", "1") {
         Proposal storage proposal = proposals[_proposal];
         require(proposal.expiration >= block.number, "Closed proposal");
         require(
-            msg.sender == voter || (!usedSignatures(signedDelegation) &&
-                verifyDelegationSignature(signedDelegation)) == voter,
+            msg.sender == voter ||
+                (!usedSignatures(signedDelegation) &&
+                    verifyDelegationSignature(signedDelegation)) ==
+                voter,
             "Invalid delegation"
         );
         require(!proposal.voters[voter], "Already voted");
