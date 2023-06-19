@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "../Delegatable.sol";
 
 contract DelegatableVoter is Ownable, Delegatable("DelegatableVoter", "1") {
+    // TBD EVENTS
     struct Proposal {
         uint256 supportVotes;
         uint256 againstVotes;
@@ -13,6 +14,8 @@ contract DelegatableVoter is Ownable, Delegatable("DelegatableVoter", "1") {
     }
 
     mapping(bytes32 => Proposal) public proposals;
+    // Prevents signature replay is true it was used
+    mapping(SignedDelegation => bool) usedSignatures;
 
     /* Only the owner of the contract is be able to create new proposals.
      * A proposal consists of a short string description and an expiration time (measured in block numbers).
@@ -36,6 +39,7 @@ contract DelegatableVoter is Ownable, Delegatable("DelegatableVoter", "1") {
         SignedDelegation memory signedDelegation
     ) external returns (bytes32) {
         require(
+            !usedSignatures(signedDelegation)&&
             verifyDelegationSignature(signedDelegation) == owner(),
             "Invalid delegation"
         );
@@ -72,8 +76,8 @@ contract DelegatableVoter is Ownable, Delegatable("DelegatableVoter", "1") {
         Proposal storage proposal = proposals[_proposal];
         require(proposal.expiration >= block.number, "Closed proposal");
         require(
-            msg.sender == voter ||
-                verifyDelegationSignature(signedDelegation) == voter,
+            msg.sender == voter || (!usedSignatures(signedDelegation) &&
+                verifyDelegationSignature(signedDelegation)) == voter,
             "Invalid delegation"
         );
         require(!proposal.voters[voter], "Already voted");
